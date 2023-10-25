@@ -197,10 +197,11 @@ namespace ExampleWidgetProvider
         {
             var widgetContext = contextChangedArgs.WidgetContext;
             var widgetId = widgetContext.Id;
-            var widgetSize = widgetContext.Size;
 
-            Console.WriteLine(widgetSize.ToString());
             // Here we could be sending a distinct JSON template / data accordingly to the size of Widget
+            // var widgetSize = widgetContext.Size;
+            // ...
+
             if (RunningWidgets.ContainsKey(widgetId))
             {
                 var localWidgetInfo = RunningWidgets[widgetId];
