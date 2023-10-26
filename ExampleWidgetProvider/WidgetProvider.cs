@@ -8,9 +8,10 @@ namespace ExampleWidgetProvider
         public string widgetName { get; set; } = string.Empty;
         public int customState = 0;
         public bool isActive = false;
+        public bool inCustomization = false;
     }
 
-    internal class WidgetProvider : IWidgetProvider
+    internal class WidgetProvider : IWidgetProvider, IWidgetProvider2
     {
         public static Dictionary<string, CompactWidgetInfo> RunningWidgets = new Dictionary<string, CompactWidgetInfo>();
 
@@ -102,12 +103,12 @@ namespace ExampleWidgetProvider
 }";
 
         const string countWidgetTemplate = @"
-{                                                                     
-    ""type"": ""AdaptiveCard"",                                         
-    ""body"": [                                                         
-        {                                                               
+{
+    ""type"": ""AdaptiveCard"",
+    ""body"": [
+        {
             ""type"": ""TextBlock"",                                    
-            ""text"": ""You have clicked the button ${count} times""    
+            ""text"": ""You have clicked the button ${count} times""
         },
         {
                 ""text"":""Rendering Only if Small"",
@@ -123,17 +124,17 @@ namespace ExampleWidgetProvider
             ""text"":""Rendering Only if Large"",
             ""type"":""TextBlock"",
             ""$when"":""${$host.widgetSize==\""large\""}""
-        }                                                                    
-    ],                                                                  
-    ""actions"": [                                                      
-        {                                                               
-            ""type"": ""Action.Execute"",                               
-            ""title"": ""Increment"",                                   
-            ""verb"": ""inc""                                           
-        }                                                               
-    ],                                                                  
+        }
+    ],
+    ""actions"": [
+        {
+            ""type"": ""Action.Execute"",
+            ""title"": ""Increment"",
+            ""verb"": ""inc""
+        }
+    ],
     ""$schema"": ""http://adaptivecards.io/schemas/adaptive-card.json"",
-    ""version"": ""1.5""                                                
+    ""version"": ""1.5""
 }";
 
         public void CreateWidget(WidgetContext widgetContext)
@@ -179,15 +180,42 @@ namespace ExampleWidgetProvider
         public void OnActionInvoked(WidgetActionInvokedArgs actionInvokedArgs)
         {
             var verb = actionInvokedArgs.Verb;
-            if (verb.Equals("inc"))
+            if (verb == "inc")
             {
                 var widgetId = actionInvokedArgs.WidgetContext.Id;
-                // You can access previous sent data by
+                // If you need to use some data that was passed in after
+                // Action was invoked, you can get it from the args:
                 // var data = actionInvokedArgs.Data;
                 if (RunningWidgets.ContainsKey(widgetId))
                 {
                     var localWidgetInfo = RunningWidgets[widgetId];
+                    // Increment the count
                     localWidgetInfo.customState++;
+                    UpdateWidget(localWidgetInfo);
+                }
+            }
+            else if (verb == "reset")
+            {
+                var widgetId = actionInvokedArgs.WidgetContext.Id;
+                // var data = actionInvokedArgs.Data;
+                if (RunningWidgets.ContainsKey(widgetId))
+                {
+                    var localWidgetInfo = RunningWidgets[widgetId];
+                    // Reset the count
+                    localWidgetInfo.customState = 0;
+                    localWidgetInfo.inCustomization = false;
+                    UpdateWidget(localWidgetInfo);
+                }
+            }
+            else if (verb == "exitCustomization")
+            {
+                var widgetId = actionInvokedArgs.WidgetContext.Id;
+                // var data = actionInvokedArgs.Data;
+                if (RunningWidgets.ContainsKey(widgetId))
+                {
+                    var localWidgetInfo = RunningWidgets[widgetId];
+                    // Stop sending the customization template
+                    localWidgetInfo.inCustomization = false;
                     UpdateWidget(localWidgetInfo);
                 }
             }
@@ -212,27 +240,40 @@ namespace ExampleWidgetProvider
         void UpdateWidget(CompactWidgetInfo localWidgetInfo)
         {
             WidgetUpdateRequestOptions updateOptions = new WidgetUpdateRequestOptions(localWidgetInfo.widgetId);
-            
-            string templateJSON = "";
-            string dataJson = "";
 
+            string templateJson = null;
             if (localWidgetInfo.widgetName == "Weather_Widget")
             {
-                templateJSON = weatherWidgetTemplate.ToString();
-                dataJson = "{}";
-            } else if (localWidgetInfo.widgetName == "Counting_Widget")
+                templateJson = weatherWidgetTemplate.ToString();
+            }
+            else if (localWidgetInfo.widgetName == "Counting_Widget")
             {
-                templateJSON = countWidgetTemplate.ToString();
-                dataJson = "{\"count\": " + localWidgetInfo.customState.ToString()+"}";
+                if (!localWidgetInfo.inCustomization)
+                {
+                    templateJson = countWidgetTemplate.ToString();
+                }
+                else
+                {
+                    templateJson = countWidgetCustomizationTemplate.ToString();
+                }
+
             }
 
-            updateOptions.Template = templateJSON;
-            updateOptions.Data = dataJson;
+            string dataJson = null;
+            if (localWidgetInfo.widgetName == "Weather_Widget")
+            {
+                dataJson = "{}";
+            }
+            else if (localWidgetInfo.widgetName == "Counting_Widget")
+            {
+                dataJson = "{ \"count\": " + localWidgetInfo.customState.ToString() + " }";
+            }
 
-            // You can store custom state in the widget service thatr you are able to query at any time
+            updateOptions.Template = templateJson;
+            updateOptions.Data = dataJson;
+            // You can store some custom state in the widget service that you will be able to query at any time.
             updateOptions.CustomState = localWidgetInfo.customState.ToString();
             WidgetManager.GetDefault().UpdateWidget(updateOptions);
-
         }
 
 
@@ -243,5 +284,37 @@ namespace ExampleWidgetProvider
         {
             return emptyWidgetListEvent;
         }
+
+        public void OnCustomizationRequested(WidgetCustomizationRequestedArgs customizationInvokedArgs)
+        {
+            var widgetId = customizationInvokedArgs.WidgetContext.Id;
+            if (RunningWidgets.ContainsKey(widgetId))
+            {
+                var localWidgetInfo = RunningWidgets[widgetId];
+                localWidgetInfo.inCustomization = true;
+                UpdateWidget(localWidgetInfo);
+            }
+        }
+
+        const string countWidgetCustomizationTemplate = @"
+{
+    ""type"": ""AdaptiveCard"",
+    ""actions"" : [
+        {
+            ""type"": ""Action.Execute"",
+            ""title"" : ""Reset counter"",
+            ""verb"": ""reset""
+            },
+            {
+            ""type"": ""Action.Execute"",
+            ""title"": ""Exit customization"",
+            ""verb"": ""exitCustomization""
+            }
+    ],
+    ""$schema"": ""http://adaptivecards.io/schemas/adaptive-card.json"",
+    ""version"": ""1.5""
+}";
+
+
     }
 }

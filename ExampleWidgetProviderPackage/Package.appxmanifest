@@ -95,7 +95,8 @@
                   </Definition>
                   <Definition Id="Counting_Widget"
                           DisplayName="Microsoft Counting Widget"
-                          Description="Couting Widget Description">
+                          Description="CONFIG Couting Widget Description"
+                          IsCustomizable="true">
                     <Capabilities>
                       <Capability>
                         <Size Name="small" />

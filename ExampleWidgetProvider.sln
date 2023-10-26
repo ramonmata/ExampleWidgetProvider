@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.7.34221.43
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExampleWidgetProvider", "ExampleWidgetProvider\ExampleWidgetProvider.csproj", "{C61C83AA-B8D0-4A20-A4EF-81D0C196CC5F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExampleWidgetProvider", "ExampleWidgetProvider\ExampleWidgetProvider.csproj", "{C61C83AA-B8D0-4A20-A4EF-81D0C196CC5F}"
 EndProject
 Project("{C7167F0D-BC9F-4E6E-AFE1-012C56B48DB5}") = "ExampleWidgetProviderPackage", "ExampleWidgetProviderPackage\ExampleWidgetProviderPackage.wapproj", "{AF0BBCFB-C95D-4FFF-9213-A3EA6AFCBAAB}"
 EndProject
