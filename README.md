@@ -7,3 +7,7 @@ Weather_Icon.png
 Weather_Screenshot.png
 Counting_Icon.png
 Counting_Screenshot.png
+
+TODO:
+Customization ui
+https://learn.microsoft.com/en-us/windows/apps/develop/widgets/implement-widget-provider-cs#implementing-widget-customization
